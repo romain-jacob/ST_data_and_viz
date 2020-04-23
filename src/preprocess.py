@@ -3,7 +3,6 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
-
 prr_file = 'prr.csv'
 rssi_file = 'rssi.csv'
 
@@ -137,10 +136,12 @@ def parse_run_prr(pair,data,datetime,force_computation=False):
         TimeDelta = row['TimeDelta']
         RssiA = row['RssiA']
         RssiB = row['RssiB']
-        if TimeDelta > 0:
-            PowerDelta.append(RssiB-RssiA)
-        else:
-            PowerDelta.append(RssiA-RssiB)
+        # if TimeDelta > 0:
+        #     PowerDelta.append(RssiB-RssiA)
+        # else:
+        #     PowerDelta.append(RssiA-RssiB)
+
+        PowerDelta.append(RssiB-RssiA)
 
         # Compute the PRR
         RxCount = row['RxCount']
@@ -168,3 +169,46 @@ def parse_run_prr(pair,data,datetime,force_computation=False):
     df.to_csv(output_path / 'prr.csv', index=False)
 
     return df
+
+def parse_all_data(verbose=False, force_computation=False):
+
+    # Data paths
+    data_path = Path('data_raw')
+    output_path = Path('data_preprocessed')
+
+    if not force_computation:
+        try:
+            print('Processed data retrieved (not computed).')
+            df = pd.read_csv(output_path / 'data_preprocessed_all.csv')
+            df.set_index('GlobalExpCount', inplace=True)
+            return df
+        except FileNotFoundError:
+            print('No existing file found. Computing.')
+
+    # Temporary data structure
+    frames = []
+
+    # Loop through all folders
+    for pair in [x for x in data_path.iterdir() if x.is_dir()]:
+        for data in [x for x in pair.iterdir() if x.is_dir()]:
+            for datetime in [x for x in data.iterdir() if x.is_dir()]:
+                if verbose:
+                    print(datetime)
+                # Parse RSSI measurements to get the median RSS from both
+                # transmitters at the receiver side
+                rssi = parse_run_rssi(pair.name,data.name,datetime.name)
+                # Parse PRR measurements, add experiment metadata,
+                # RSS values, and compute the estimated PowerDelta
+                prr  = parse_run_prr(pair.name,data.name,datetime.name,force_computation)
+                # Append all the result to a list
+                frames.append(prr)
+
+    # Concatenate all results as a unique DataFrame,
+    # do some formating clean-up and save as .csv
+    result = pd.concat(frames)
+    result['GlobalExpCount'] = np.arange(len(result))
+    result.set_index('GlobalExpCount', inplace=True)
+    result = result.rename(columns={"ExpCount": "LocalExpCount"})
+    result.to_csv(output_path / 'data_preprocessed_all.csv')
+
+    return result
