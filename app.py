@@ -28,7 +28,17 @@ app.layout = html.Div([
         max=16,
         value=0,
         marks={str(Delta): str(Delta) for Delta in range(-16,17)},
-        step=None
+        step=None,
+        included=False
+    ),
+    html.Label('Select the physical layers of interest'),
+    dcc.Checklist(
+        id='modes',
+        options=[
+            {'label' : Modes[i]['label'], 'value': i} for i in Modes
+        ],
+        value=[i for i in Modes],
+        labelStyle={'display': 'inline-block'}
     ),
     html.Label('Select the type of packets sent'),
     dcc.RadioItems(
@@ -55,9 +65,10 @@ app.layout = html.Div([
     Output('graph-with-slider', 'figure'),
     [Input('power-slider', 'value'),
      Input('packet-type', 'value'),
-     Input('transmitter-pair', 'value'),])
+     Input('transmitter-pair', 'value'),
+     Input('modes', 'value'),])
 
-def update_figure(PowerDelta,SamePayload,TransPair):
+def update_figure(PowerDelta,SamePayload,TransPair,ModesToShow):
 
     # Filter the data to plot
     filter = (
@@ -70,13 +81,13 @@ def update_figure(PowerDelta,SamePayload,TransPair):
     # Initialize the list of traces to plot
     traces = []
 
-    # Load the median lines
+    # Load the median and CI data
     file_path = data_path / Parameters['TransPair'][TransPair]['path'] / Parameters['SamePayload'][SamePayload]['path']
     file_name = 'TimeDeltaTraces_%s_%s_(%i).csv' % (TransPair,SamePayload,PowerDelta)
     df_median = pd.read_csv(file_path / file_name)
 
     # Loop through the modes
-    for mode in Modes:
+    for mode in ModesToShow:
 
         # Filter specific mode data
         mode_filter = (filtered_df["Mode"] == Modes[mode]['id'])
@@ -85,13 +96,21 @@ def update_figure(PowerDelta,SamePayload,TransPair):
         # Prepare data to plot
         if len(mode_df) > 0:
             # Extract all data points
-            x_data = mode_df["TimeDelta"]
-            y_data = mode_df["PRR"]
+            x_data = mode_df["TimeDelta"].to_list()
+            y_data = mode_df["PRR"].to_list()
 
             # Extract median data
-            col_name = 'median_'+mode
-            x_median = df_median["TimeDelta"]
-            y_median = df_median[col_name]
+            x_median = df_median["TimeDelta"].to_list()
+            y_median = df_median['median_'+mode].to_list()
+
+            # Extract CI data
+            y_LB = df_median['LB_'+mode].to_list()
+            y_UB = df_median['UB_'+mode].to_list()
+
+            # Prepare the trace for the CI area
+            x_CI = x_median + x_median[::-1]
+            y_CI = y_LB + y_UB[::-1]
+
 
         else:
             # Force displaying the trace, even if empty
@@ -99,8 +118,12 @@ def update_figure(PowerDelta,SamePayload,TransPair):
             y_data = [np.nan]
             x_median = [np.nan]
             y_median = [np.nan]
+            y_LB = [np.nan]
+            y_UB = [np.nan]
+            x_CI = [np.nan]
+            y_CI = [np.nan]
 
-
+        # Plot raw data
         scatter = dict(
             x=x_data,
             y=y_data,
@@ -114,6 +137,7 @@ def update_figure(PowerDelta,SamePayload,TransPair):
         )
         traces.append(scatter)
 
+        # Plot median line
         median_line = dict(
             x=x_median,
             y=y_median,
@@ -125,11 +149,28 @@ def update_figure(PowerDelta,SamePayload,TransPair):
         )
         traces.append(median_line)
 
+        CI = dict(
+            x=x_CI,
+            y=y_CI,
+            mode='lines',
+            line={
+                'color':Modes[mode]['color'],
+                'width':0
+            },
+            showlegend=False,
+            legendgroup=Modes[mode]['id'],
+            name=Modes[mode]['label']+' CI',
+            fill='toself',
+            hoverinfo='skip',
+            opacity=0.3,
+        )
+        traces.append(CI)
+
     return {
         'data': traces,
         'layout': dict(
             title={
-                'text':'PRR = f(Time Delta) <br> with Power Delta = %d dB' % 0,
+                'text':'PRR = f(Time Delta) <br> with Power Delta = %i dB' % PowerDelta,
             },
             margin={'t':150},
             xaxis={
@@ -137,6 +178,7 @@ def update_figure(PowerDelta,SamePayload,TransPair):
                 'range':[-150,150]
             },
             yaxis={
+                'title':{'text':'PRR [%]'},
                 'range':[0,103]
             },
             transition = {'duration': 500},

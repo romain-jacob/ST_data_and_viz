@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 
 from src.helpers import Modes, Parameters
+from src.stats import ThompsonCI_twosided
 
 prr_file = 'prr.csv'
 rssi_file = 'rssi.csv'
@@ -297,6 +298,7 @@ def computeTimeDeltaTraces():
 
                 # Loop through the modes
                 for mode in Modes:
+                    # print(Modes[mode])
 
                     # Filter specific mode data
                     mode_filter = (filtered_df["Mode"] == Modes[mode]['id'])
@@ -307,19 +309,37 @@ def computeTimeDeltaTraces():
                         # Extract all data points
                         y_data = mode_df["PRR"]
 
-                        # Compute the median line
+                        # Compute the median and CI bounds
                         y_median = []
+                        y_LB = []
+                        y_UB = []
                         for x in x_median:
                             median_filter = (mode_df["TimeDelta"] == x)
-                            median_data = mode_df.where(median_filter).dropna().PRR
-                            y_median.append(np.median(median_data))
-
+                            median_data = sorted(mode_df.where(median_filter).dropna().PRR.tolist())
+                            # print(median_data)
+                            if len(median_data) > 0:
+                                y_median.append(np.median(median_data))
+                                LB, UB = ThompsonCI_twosided(len(median_data), 50, 75)
+                                # print(LB,UB)
+                                if LB is not np.nan:
+                                    y_LB.append(median_data[LB])
+                                    y_UB.append(median_data[UB])
+                                else:
+                                    y_LB.append(np.nan)
+                                    y_UB.append(np.nan)
+                            else:
+                                y_median.append(np.nan)
+                                y_LB.append(np.nan)
+                                y_UB.append(np.nan)
                     else:
                         # Force displaying the trace, even if empty
                         y_median = [np.nan]*len(x_median)
+                        y_LB = [np.nan]*len(x_median)
+                        y_UB = [np.nan]*len(x_median)
 
-                    col_label = 'median_'+mode
-                    df_median[col_label] = y_median
+                    df_median['median_'+mode] = y_median
+                    df_median['LB_'+mode] = y_LB
+                    df_median['UB_'+mode] = y_UB
 
                 # Save DataFrame in CSV for fast reloading
                 file_path = data_path / Parameters['TransPair'][TransPair]['path'] / Parameters['SamePayload'][SamePayload]['path']
