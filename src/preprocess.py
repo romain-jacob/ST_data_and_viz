@@ -2,6 +2,8 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
+from src.helpers import Modes, Parameters
+
 prr_file = 'prr.csv'
 rssi_file = 'rssi.csv'
 
@@ -259,4 +261,71 @@ def clean_raw_data():
                 # Debug output
                 print('Done: %s', str(datetime))
 
+    return
+
+def computeTimeDeltaTraces():
+
+    data_path = Path('data_preprocessed')
+
+    # Load the PRR data
+    df = parse_all_data()
+
+    # X values we are interested in
+    x_median = np.arange(-140, 150, 10)
+    # Remove +/- 130 and 110 (not tested)
+    x_median = x_median[
+        (x_median != 130) &
+        (x_median != 110) &
+        (x_median != -110) &
+        (x_median != -130)]
+
+    for TransPair in df['TransPair'].unique():
+        for SamePayload in df['SamePayload'].unique():
+            for PowerDelta in df['PowerDelta'].dropna().unique():
+
+                # Initialize the storing DataFrame
+                df_median = pd.DataFrame()
+                df_median["TimeDelta"] = x_median
+
+                # Filter the data to process
+                filter = (
+                    (df['TransPair'] == TransPair) &
+                    (df['SamePayload'] == SamePayload) &
+                    (df["PowerDelta"] == PowerDelta)
+                )
+                filtered_df = df.where(filter).dropna()
+
+                # Loop through the modes
+                for mode in Modes:
+
+                    # Filter specific mode data
+                    mode_filter = (filtered_df["Mode"] == Modes[mode]['id'])
+                    mode_df = filtered_df.where(mode_filter).dropna()
+
+                    # Prepare data to plot
+                    if len(mode_df) > 0:
+                        # Extract all data points
+                        y_data = mode_df["PRR"]
+
+                        # Compute the median line
+                        y_median = []
+                        for x in x_median:
+                            median_filter = (mode_df["TimeDelta"] == x)
+                            median_data = mode_df.where(median_filter).dropna().PRR
+                            y_median.append(np.median(median_data))
+
+                    else:
+                        # Force displaying the trace, even if empty
+                        y_median = [np.nan]*len(x_median)
+
+                    col_label = 'median_'+mode
+                    df_median[col_label] = y_median
+
+                # Save DataFrame in CSV for fast reloading
+                file_path = data_path / Parameters['TransPair'][TransPair]['path'] / Parameters['SamePayload'][SamePayload]['path']
+                file_name = 'TimeDeltaTraces_%s_%s_(%i).csv' % (TransPair,SamePayload,PowerDelta)
+                df_median.to_csv(file_path / file_name, index=False)
+
+                # Debug output
+                print('Done with %s' % file_name)
     return

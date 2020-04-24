@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -6,9 +8,10 @@ from dash.dependencies import Input, Output
 import pandas as pd
 import numpy as np
 from src.preprocess import parse_all_data
-from src.helpers import Modes
+from src.helpers import Modes, Parameters
 
-df = parse_all_data(force_computation=False)
+df = parse_all_data()
+data_path = Path('data_preprocessed')
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -67,6 +70,11 @@ def update_figure(PowerDelta,SamePayload,TransPair):
     # Initialize the list of traces to plot
     traces = []
 
+    # Load the median lines
+    file_path = data_path / Parameters['TransPair'][TransPair]['path'] / Parameters['SamePayload'][SamePayload]['path']
+    file_name = 'TimeDeltaTraces_%s_%s_(%i).csv' % (TransPair,SamePayload,PowerDelta)
+    df_median = pd.read_csv(file_path / file_name)
+
     # Loop through the modes
     for mode in Modes:
 
@@ -80,13 +88,10 @@ def update_figure(PowerDelta,SamePayload,TransPair):
             x_data = mode_df["TimeDelta"]
             y_data = mode_df["PRR"]
 
-            # Compute the median line
-            x_median = sorted(set(x_data))
-            y_median = []
-            for x in x_median:
-                median_filter = (mode_df["TimeDelta"] == x)
-                median_data = mode_df.where(median_filter).dropna().PRR
-                y_median.append(np.median(median_data))
+            # Extract median data
+            col_name = 'median_'+mode
+            x_median = df_median["TimeDelta"]
+            y_median = df_median[col_name]
 
         else:
             # Force displaying the trace, even if empty
@@ -129,6 +134,7 @@ def update_figure(PowerDelta,SamePayload,TransPair):
             margin={'t':150},
             xaxis={
                 'title':{'text':'Transmitters Time Delta [ticks]'},
+                'range':[-150,150]
             },
             yaxis={
                 'range':[0,103]

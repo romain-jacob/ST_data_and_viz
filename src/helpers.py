@@ -27,3 +27,14 @@ Modes = dict(
         label="BLE 125 Kbit"
     ),
 )
+
+Parameters = dict(
+    SamePayload     = [
+            dict(path = 'different_data'),
+            dict(path = 'same_data'),
+    ],
+    TransPair       = dict(
+            A = dict(path = 'transmitter_pair_a'),
+            B = dict(path = 'transmitter_pair_b'),
+    ),
+)
