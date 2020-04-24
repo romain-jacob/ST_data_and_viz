@@ -1,4 +1,3 @@
-
 from pathlib import Path
 import pandas as pd
 import numpy as np
@@ -6,20 +5,22 @@ import numpy as np
 prr_file = 'prr.csv'
 rssi_file = 'rssi.csv'
 
-def parse_run_rssi(pair,data,datetime,force_computation=False):
+def parse_run_rssi(pair,data,datetime,force_computation=''):
 
-    data_path = Path('data_raw')
+    data_path = Path('data_raw_cleaned')
     output_path = Path('data_preprocessed')
     data_path = data_path / pair / data / datetime
     output_path = output_path / pair / data / datetime
 
-    if not force_computation:
+    if (force_computation == 'rssi'):
+        print('Recomputing RSSI data...')
+    else:
         try:
             df = pd.read_csv(output_path / 'medianRSSI.csv')
-            print('Processed data retrieved (not computed).')
+            print('RSSI data retrieved.')
             return df
         except FileNotFoundError:
-            print('No existing file found. Computing.')
+            print('No existing file found. Computing RSSI...')
 
     # Create output directory if it does not exist yet
     if not output_path.is_dir():
@@ -28,7 +29,7 @@ def parse_run_rssi(pair,data,datetime,force_computation=False):
 
     # Load RSSI data
     # -> skip leading and trailing space in column names
-    rssi_df = pd.read_csv(str(data_path / rssi_file), sep=r'\s*,\s*', engine='python')
+    rssi_df = pd.read_csv(str(data_path / rssi_file))
 
     # Create a filter for missing RSSI measurements
     filter = rssi_df["RSSI"]!="NONE"
@@ -37,7 +38,9 @@ def parse_run_rssi(pair,data,datetime,force_computation=False):
     rssi_df = rssi_df.where(filter).dropna().astype('int32')
 
     # Rename columns
-    rssi_df = rssi_df.rename(columns={"TX Power": "TxPower", "RSSI": "medianRSSI"})
+    rssi_df = rssi_df.rename(columns={
+        "RSSI": "medianRSSI",
+    })
 
     # Aggregate and compute the median
     rssi_medians = rssi_df.groupby(["Mode","Transmitter","TxPower"]).medianRSSI.agg('median')
@@ -47,37 +50,29 @@ def parse_run_rssi(pair,data,datetime,force_computation=False):
 
     return rssi_medians
 
-def parse_run_prr(pair,data,datetime,force_computation=False):
+def parse_run_prr(pair,data,datetime,force_computation=''):
 
-    data_path = Path('data_raw')
+    data_path = Path('data_raw_cleaned')
     output_path = Path('data_preprocessed')
     data_path = data_path / pair / data / datetime
     output_path = output_path / pair / data / datetime
 
-    if not force_computation:
+    if ((force_computation == 'prr') or (force_computation == 'rssi')):
+        print('Recomputing PRR data...')
+    else:
         try:
             df = pd.read_csv(output_path / 'prr.csv')
-            print('Processed data retrieved (not computed).')
+            print('PRR data retrieved.')
             return df
         except FileNotFoundError:
-            print('No existing file found. Computing.')
+            print('No existing file found. Computing PRR...')
 
     # Load PRR data
     # -> skip leading and trailing space in column names
-    df = pd.read_csv(str(data_path / prr_file), sep=r'\s*,\s*', engine='python')
+    df = pd.read_csv(str(data_path / prr_file))
 
     # Load RSSI data
     rssi_df = pd.read_csv(output_path / 'medianRSSI.csv')
-
-    # Rename columns
-    df = df.rename(columns={
-        "Experiment Number": "ExpCount",
-        "TX Power A": "TxPowerA",
-        "TX Power B": "TxPowerB",
-        "Time Delta": "TimeDelta",
-        "Packets Received": "RxCount",
-        "Packets Transmitted": "TxCount",
-    })
 
     # Fill-in the values based on the RSSI DataFrame
     TxPowerA = df.TxPowerA.unique()
@@ -125,31 +120,17 @@ def parse_run_prr(pair,data,datetime,force_computation=False):
                 (df['TxPowerB'] == Tx), ("RssiB")
             ] = RssiB_value
 
-    # Loop through the rows to add
+    # Add to the DataFrame
     # + PowerDelta
+    df["PRR"] = (100*df['RxCount']/df['TxCount'])
     # + PRR (in %)
-    PowerDelta = []
-    PRR = []
-    for index, row in df.iterrows():
+    # /!\ Do not change! Has to be B-A to properly cover the
+    # parameter space (due to the experiment settings)
+    df["PowerDelta"] = df['RssiB'] - df['RssiA']
+    # Round values to get only integers
+    df = df.round({'PowerDelta': 0})
 
-        # Compute the received power delta
-        TimeDelta = row['TimeDelta']
-        RssiA = row['RssiA']
-        RssiB = row['RssiB']
-        # if TimeDelta > 0:
-        #     PowerDelta.append(RssiB-RssiA)
-        # else:
-        #     PowerDelta.append(RssiA-RssiB)
-
-        PowerDelta.append(RssiB-RssiA)
-
-        # Compute the PRR
-        RxCount = row['RxCount']
-        TxCount = row['TxCount']
-        PRR.append(100*RxCount/TxCount)
-
-
-    # Save new info in the DataFrame
+    # Save metadata info in the DataFrame
     if data == 'same_data':
         data_label = 1
     elif data == 'different_data':
@@ -158,9 +139,6 @@ def parse_run_prr(pair,data,datetime,force_computation=False):
         pair_label = 'A'
     elif pair == 'transmitter_pair_b':
         pair_label = 'B'
-
-    df["PRR"] = PRR
-    df["PowerDelta"] = PowerDelta
     df["DateTime"] = pd.to_datetime(datetime, format='%Y%m%d_%H%M%S')
     df["SamePayload"] = data_label
     df["TransPair"] = pair_label
@@ -170,20 +148,26 @@ def parse_run_prr(pair,data,datetime,force_computation=False):
 
     return df
 
-def parse_all_data(verbose=False, force_computation=False):
+def parse_all_data(verbose=False, force_computation=''):
 
     # Data paths
-    data_path = Path('data_raw')
+    data_path = Path('data_raw_cleaned')
     output_path = Path('data_preprocessed')
 
-    if not force_computation:
+    # 'rssi' flag triggers the recomputation of everything from the raw data
+    if force_computation == 'all':
+        force_computation='rssi'
+
+    if ((force_computation == 'prr') or (force_computation == 'rssi')):
+        print('Recomputing preprocessed data...')
+    else:
         try:
-            print('Processed data retrieved (not computed).')
             df = pd.read_csv(output_path / 'data_preprocessed_all.csv')
             df.set_index('GlobalExpCount', inplace=True)
+            print('Processed data retrieved.')
             return df
         except FileNotFoundError:
-            print('No existing file found. Computing.')
+            print('No existing file found. Computing...')
 
     # Temporary data structure
     frames = []
@@ -196,7 +180,7 @@ def parse_all_data(verbose=False, force_computation=False):
                     print(datetime)
                 # Parse RSSI measurements to get the median RSS from both
                 # transmitters at the receiver side
-                rssi = parse_run_rssi(pair.name,data.name,datetime.name)
+                rssi = parse_run_rssi(pair.name,data.name,datetime.name,force_computation)
                 # Parse PRR measurements, add experiment metadata,
                 # RSS values, and compute the estimated PowerDelta
                 prr  = parse_run_prr(pair.name,data.name,datetime.name,force_computation)
@@ -211,4 +195,68 @@ def parse_all_data(verbose=False, force_computation=False):
     result = result.rename(columns={"ExpCount": "LocalExpCount"})
     result.to_csv(output_path / 'data_preprocessed_all.csv')
 
+    print('Done.')
+
     return result
+
+def clean_raw_data():
+    # Data paths
+    data_path = Path('data_raw')
+    output_path = Path('data_raw_cleaned')
+
+    for pair in [x for x in data_path.iterdir() if x.is_dir()]:
+        for data in [x for x in pair.iterdir() if x.is_dir()]:
+            for datetime in [x for x in data.iterdir() if x.is_dir()]:
+
+                # Create output directory if it does not exist yet
+                file_path = output_path / pair.name / data.name / datetime.name
+                if not (file_path).is_dir():
+                    file_path.mkdir(parents=True, exist_ok=True)
+                    print('Created path: %s' % str(file_path))
+
+                # ===============
+                # Clean PRR files
+                # ===============
+                df = pd.read_csv(str(datetime / prr_file), sep=r'\s*,\s*', engine='python')
+
+                # Rename columns
+                df = df.rename(columns={
+                    "Experiment Number": "ExpCount",
+                    "TX Power A": "TxPowerA",
+                    "TX Power B": "TxPowerB",
+                    "Time Delta": "TimeDelta",
+                    "Packets Received": "RxCount",
+                    "Packets Transmitted": "TxCount",
+                })
+
+                # Correct a bug in TimeDelta values:
+                # -100' values are written as '100'
+                TimeDelta_current = None
+                for index, row in df.iterrows():
+                    # print(row["Time Delta"])
+                    if ((TimeDelta_current == -120) &
+                        (row["TimeDelta"] == 100)):
+                        row["TimeDelta"] = -100
+                    TimeDelta_current = row["TimeDelta"]
+
+                # Save DataFrame as csv
+                df.to_csv(file_path / 'prr.csv', index=False)
+
+                # ===============
+                # Clean RSSI files
+                # ===============
+                df = pd.read_csv(str(datetime / rssi_file), sep=r'\s*,\s*', engine='python')
+
+                # Rename columns
+                df = df.rename(columns={
+                    "Measurement Number": "MeasureCount",
+                    "TX Power": "TxPower",
+                })
+
+                # Save DataFrame as csv
+                df.to_csv(file_path / 'rssi.csv', index=False)
+
+                # Debug output
+                print('Done: %s', str(datetime))
+
+    return
