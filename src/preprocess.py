@@ -349,3 +349,82 @@ def computeTimeDeltaTraces():
                 # Debug output
                 print('Done with %s' % file_name)
     return
+
+
+def computePowerDeltaTraces():
+
+    data_path = Path('data_preprocessed')
+
+    # Load the PRR data
+    df = parse_all_data()
+
+    # X values we are interested in
+    x_median = np.arange(-16, 17)
+
+    for TransPair in df['TransPair'].unique():
+        for SamePayload in df['SamePayload'].unique():
+            for TimeDelta in df['TimeDelta'].dropna().unique():
+
+                # Initialize the storing DataFrame
+                df_median = pd.DataFrame()
+                df_median["PowerDelta"] = x_median
+
+                # Filter the data to process
+                filter = (
+                    (df['TransPair'] == TransPair) &
+                    (df['SamePayload'] == SamePayload) &
+                    (df["TimeDelta"] == TimeDelta)
+                )
+                filtered_df = df.where(filter).dropna()
+
+                # Loop through the modes
+                for mode in Modes:
+
+                    # Filter specific mode data
+                    mode_filter = (filtered_df["Mode"] == Modes[mode]['id'])
+                    mode_df = filtered_df.where(mode_filter).dropna()
+
+                    # Prepare data to plot
+                    if len(mode_df) > 0:
+                        # Extract all data points
+                        y_data = mode_df["PRR"]
+
+                        # Compute the median and CI bounds
+                        y_median = []
+                        y_LB = []
+                        y_UB = []
+                        for x in x_median:
+                            median_filter = (mode_df["PowerDelta"] == x)
+                            median_data = sorted(mode_df.where(median_filter).dropna().PRR.tolist())
+                            if len(median_data) > 0:
+                                y_median.append(np.median(median_data))
+                                LB, UB = ThompsonCI_twosided(len(median_data), 50, 75)
+                                # print(LB,UB)
+                                if LB is not np.nan:
+                                    y_LB.append(median_data[LB])
+                                    y_UB.append(median_data[UB])
+                                else:
+                                    y_LB.append(np.nan)
+                                    y_UB.append(np.nan)
+                            else:
+                                y_median.append(np.nan)
+                                y_LB.append(np.nan)
+                                y_UB.append(np.nan)
+                    else:
+                        # Force displaying the trace, even if empty
+                        y_median = [np.nan]*len(x_median)
+                        y_LB = [np.nan]*len(x_median)
+                        y_UB = [np.nan]*len(x_median)
+
+                    df_median['median_'+mode] = y_median
+                    df_median['LB_'+mode] = y_LB
+                    df_median['UB_'+mode] = y_UB
+
+                # Save DataFrame in CSV for fast reloading
+                file_path = data_path / Parameters['TransPair'][TransPair]['path'] / Parameters['SamePayload'][SamePayload]['path']
+                file_name = 'PowerDeltaTraces_%s_%s_(%i).csv' % (TransPair,SamePayload,TimeDelta)
+                df_median.to_csv(file_path / file_name, index=False)
+
+                # Debug output
+                print('Done with %s' % file_name)
+    return

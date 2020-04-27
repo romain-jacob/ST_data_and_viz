@@ -1,0 +1,10 @@
+name: SyncTransVisualization
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - dash=1.11.0
+  - pandas
+  - jupyter
+  - scipy
+prefix: /home/user/miniconda3/envs/SyncTransVisualization
