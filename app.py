@@ -27,6 +27,9 @@ threeD_plot = go.Figure()
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
+# For deployment
+# server = app.server
+
 app.layout = html.Div([
 
     # Containing row
