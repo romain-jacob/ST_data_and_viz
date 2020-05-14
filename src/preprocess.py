@@ -152,6 +152,13 @@ def parse_run_prr(pair,data,datetime,force_computation=''):
     return df
 
 def parse_all_data(verbose=False, force_computation=''):
+    '''
+    Compute (or load) the processed data per run,
+    including the RSSI estimation and the PRR.
+    Pass `force_computation=True` for recompute from the raw data.
+
+    Returns a DataFrame with the preprocessed data
+    '''
 
     # Data paths
     data_path = Path('data_raw_cleaned')
@@ -203,6 +210,10 @@ def parse_all_data(verbose=False, force_computation=''):
     return result
 
 def clean_raw_data():
+    '''
+    + Rename columns
+    + Correct the logging issue for TimeDelta = -100
+    '''
     # Data paths
     data_path = Path('data_raw')
     output_path = Path('data_raw_cleaned')
@@ -264,7 +275,13 @@ def clean_raw_data():
 
     return
 
-def computeTimeDeltaTraces():
+def computeTimeDeltaTraces(all_pairs=False):
+    '''
+    + Load preprocessed data
+    + Compute the median and its two-sided
+    confidence interval (75%) for each setting
+    + Save as csv
+    '''
 
     data_path = Path('data_preprocessed')
 
@@ -272,28 +289,30 @@ def computeTimeDeltaTraces():
     df = parse_all_data()
 
     # X values we are interested in
-    x_median = np.arange(-140, 150, 10)
-    # Remove +/- 130 and 110 (not tested)
-    x_median = x_median[
-        (x_median != 130) &
-        (x_median != 110) &
-        (x_median != -110) &
-        (x_median != -130)]
+    TimeDeltaValues = sorted(df['TimeDelta'].dropna().unique())
 
-    for TransPair in df['TransPair'].unique():
+    # Check if we do each pair individually or the combination of all
+    if all_pairs:
+        TransPairList = ['all']
+    else:
+        TransPairList = df['TransPair'].unique()
+
+
+    for TransPair in TransPairList:
         for SamePayload in df['SamePayload'].unique():
-            for PowerDelta in df['PowerDelta'].dropna().unique():
+            for PowerDelta in sorted(df['PowerDelta'].dropna().unique()):
 
                 # Initialize the storing DataFrame
                 df_median = pd.DataFrame()
-                df_median["TimeDelta"] = x_median
+                df_median["TimeDelta"] = TimeDeltaValues
 
                 # Filter the data to process
                 filter = (
-                    (df['TransPair'] == TransPair) &
                     (df['SamePayload'] == SamePayload) &
                     (df["PowerDelta"] == PowerDelta)
                 )
+                if not all_pairs:
+                    filter = filter & (df['TransPair'] == TransPair)
                 filtered_df = df.where(filter).dropna()
 
                 # Loop through the modes
@@ -313,7 +332,7 @@ def computeTimeDeltaTraces():
                         y_median = []
                         y_LB = []
                         y_UB = []
-                        for x in x_median:
+                        for x in TimeDeltaValues:
                             median_filter = (mode_df["TimeDelta"] == x)
                             median_data = sorted(mode_df.where(median_filter).dropna().PRR.tolist())
                             # print(median_data)
@@ -333,9 +352,9 @@ def computeTimeDeltaTraces():
                                 y_UB.append(np.nan)
                     else:
                         # Force displaying the trace, even if empty
-                        y_median = [np.nan]*len(x_median)
-                        y_LB = [np.nan]*len(x_median)
-                        y_UB = [np.nan]*len(x_median)
+                        y_median = [np.nan]*len(TimeDeltaValues)
+                        y_LB = [np.nan]*len(TimeDeltaValues)
+                        y_UB = [np.nan]*len(TimeDeltaValues)
 
                     df_median['median_'+mode] = y_median
                     df_median['LB_'+mode] = y_LB
@@ -351,7 +370,7 @@ def computeTimeDeltaTraces():
     return
 
 
-def computePowerDeltaTraces():
+def computePowerDeltaTraces(all_pairs=False):
 
     data_path = Path('data_preprocessed')
 
@@ -361,7 +380,13 @@ def computePowerDeltaTraces():
     # X values we are interested in
     x_median = np.arange(-16, 17)
 
-    for TransPair in df['TransPair'].unique():
+    # Check if we do each pair individually or the combination of all
+    if all_pairs:
+        TransPairList = ['all']
+    else:
+        TransPairList = df['TransPair'].unique()
+
+    for TransPair in TransPairList:
         for SamePayload in df['SamePayload'].unique():
             for TimeDelta in df['TimeDelta'].dropna().unique():
 
@@ -371,10 +396,11 @@ def computePowerDeltaTraces():
 
                 # Filter the data to process
                 filter = (
-                    (df['TransPair'] == TransPair) &
                     (df['SamePayload'] == SamePayload) &
                     (df["TimeDelta"] == TimeDelta)
                 )
+                if not all_pairs:
+                    filter = filter & (df['TransPair'] == TransPair)
                 filtered_df = df.where(filter).dropna()
 
                 # Loop through the modes
