@@ -42,7 +42,8 @@ def prr_matrix_plot(
     rowHeight = 100,
     layout = None,
     showMarkers=False,
-    showCI=True
+    showCI=True,
+    SamePayload=1
     ):
 
     # Initialization
@@ -93,7 +94,8 @@ def prr_matrix_plot(
             y=(1+layout['margin']['t']/plot_height),
             xref="paper",
             yref="paper",
-            text=('Power Delta'),
+            text=('Power<br>Delta'),
+            align='left',
             showarrow=False,
             xanchor='left',
         )
@@ -120,7 +122,7 @@ def prr_matrix_plot(
             figure_data = __prep_TimeDelta_plot__(
                 df,
                 PowerDelta=PowerDeltaList[i],
-                SamePayload=1,
+                SamePayload=SamePayload,
                 TransPair='all',
                 ModesToShow=[ModeList[j]],
                 DataPath=DataPath,
@@ -139,7 +141,7 @@ def prr_matrix_plot(
 
     ## X axis
     figure.update_xaxes(
-        range=[-20,20],
+        range=[-50,50],
         )
     figure.update_xaxes(
         title_text='Transmitters Time Delta [ticks]',
@@ -169,7 +171,8 @@ def prr_f_TimeDelta(
     ModesToShow,
     DataPath=Path('data_preprocessed'),
     showMarkers=False,
-    showCI=True
+    showCI=True,
+    showTimeThreshold=False
     ):
 
     # Get the figure data
@@ -181,7 +184,8 @@ def prr_f_TimeDelta(
         ModesToShow,
         DataPath,
         showMarkers=showMarkers,
-        showCI=showCI
+        showCI=showCI,
+        showTimeThreshold=showTimeThreshold
         )
 
     if figure_data is None:
@@ -192,6 +196,7 @@ def prr_f_TimeDelta(
     final_layout["title"]["text"] = ('PRR = f(Time Delta) <br> with Power Delta = %i dB' % PowerDelta)
     final_layout["xaxis"]["title"]["text"] = ('Transmitters Time Delta [ticks]')
     # final_layout["xaxis"]["range"] = [-150,150]
+    # final_layout["xaxis"]["range"] = [-50,50]
     final_layout["xaxis"]["range"] = [-20,20]
     final_layout["yaxis"]["range"] = [-3,103]
     final_layout["height"] = 450
@@ -309,6 +314,7 @@ def __prep_TimeDelta_plot__(
     DataPath,
     showMarkers=False,
     showCI=True,
+    showTimeThreshold=False,
     ):
 
     # Filter the data to plot
@@ -378,7 +384,10 @@ def __prep_TimeDelta_plot__(
                 x=x_data,
                 y=y_data,
                 mode='markers',
-                marker={'color':Modes[mode]['color']},
+                marker={
+                    'color':Modes[mode]['color'],
+                    'size':3
+                },
                 showlegend=False,
                 legendgroup=Modes[mode]['id'],
                 name=Modes[mode]['label'],
@@ -418,43 +427,48 @@ def __prep_TimeDelta_plot__(
             traces.append(CI)
 
         # Add annotations
-        left_bound = go.layout.Annotation(
-                # label position
-                axref="x",
-                ayref="y",
-                ax=-Modes[mode]['CIthreshold_ticks'],
-                ay=105,
-                # where we point
-                xref="x",
-                yref="y",
-                x=-Modes[mode]['CIthreshold_ticks'],
-                y=0,
-                text=('- '+Modes[mode]['CIthreshold_labels']),
-                font=dict(color=Modes[mode]['color']),
-                arrowcolor=Modes[mode]['color'],
-                showarrow=True,
-                arrowside='none'
-            )
-        AnnotList.append(left_bound)
+        if showTimeThreshold:
+            left_bound = go.layout.Annotation(
+                    # label position
+                    axref="x",
+                    ayref="y",
+                    ax=-Modes[mode]['CIthreshold_ticks'],
+                    ay=115,
+                    # where we point
+                    xref="x",
+                    yref="y",
+                    x=-Modes[mode]['CIthreshold_ticks'],
+                    y=0,
+                    text=' ',
+                    font=dict(color=Modes[mode]['color']),
+                    arrowcolor=Modes[mode]['color'],
+                    showarrow=True,
+                    arrowside='none',
+                    borderpad=8,
+                )
+            AnnotList.append(left_bound)
 
-        right_bound = go.layout.Annotation(
-                # label position
-                axref="x",
-                ayref="y",
-                ax=Modes[mode]['CIthreshold_ticks'],
-                ay=105,
-                # where we point
-                xref="x",
-                yref="y",
-                x=Modes[mode]['CIthreshold_ticks'],
-                y=0,
-                text=(Modes[mode]['CIthreshold_labels']),
-                font=dict(color=Modes[mode]['color']),
-                arrowcolor=Modes[mode]['color'],
-                showarrow=True,
-                arrowside='none'
-            )
-        AnnotList.append(right_bound)
+            right_bound = go.layout.Annotation(
+                    # label position
+                    axref="x",
+                    ayref="y",
+                    ax=Modes[mode]['CIthreshold_ticks'],
+                    ay=115,
+                    # where we point
+                    xref="x",
+                    yref="y",
+                    x=Modes[mode]['CIthreshold_ticks'],
+                    y=0,
+                    text=(Modes[mode]['CIthreshold_label']),
+                    font=dict(color=Modes[mode]['color']),
+                    arrowcolor=Modes[mode]['color'],
+                    showarrow=True,
+                    arrowside='none',
+                    borderpad=8,
+                )
+            AnnotList.append(right_bound)
+
+    # Add annotations to the layout
     layout['annotations'] = AnnotList
 
     return {
@@ -557,7 +571,7 @@ def __prep_PowerDelta_plot__(
             line={'color':Modes[mode]['color']},
             showlegend=True,
             legendgroup=Modes[mode]['id'],
-            name=Modes[mode]['label']+' median',
+            name=Modes[mode]['label'],
         )
         traces.append(median_line)
 
