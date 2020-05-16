@@ -40,7 +40,7 @@ def prr_matrix_plot(
     DataPath,
     PowerDeltaList = [0,1,2,3,4],
     rowHeight = 100,
-    layout = None,
+    custom_layout = None,
     showMarkers=False,
     showCI=True,
     SamePayload=1
@@ -64,8 +64,12 @@ def prr_matrix_plot(
         width = 2000,
     )
     figure.update_layout(default_layout)
-    if layout is not None:
-        figure.update_layout(layout)
+
+    # Apply custom layout if passed as an argument
+    if custom_layout is not None:
+        figure.update_layout(custom_layout)
+
+    # convenience naming
     layout = figure.layout
 
     # Compute the plot area width
@@ -138,8 +142,8 @@ def prr_matrix_plot(
                     col=j+1)
 
     # Customize the layout
-
     ## X axis
+    ### Default
     figure.update_xaxes(
         range=[-50,50],
         )
@@ -147,6 +151,18 @@ def prr_matrix_plot(
         title_text='Transmitters Time Delta [ticks]',
         row=numRow, col=3
         )
+    ### Update with custom values
+    if ((custom_layout is not None) and
+        ('xaxis' in custom_layout)):
+        if ('tickvals' in custom_layout['xaxis']):
+            figure.update_xaxes(
+                tickvals=custom_layout['xaxis']['tickvals'],
+                )
+        if ('range' in custom_layout['xaxis']):
+            figure.update_xaxes(
+                range=custom_layout['xaxis']['range'],
+                )
+
     ## Y axis
     figure.update_yaxes(
         range=[-3,103],
