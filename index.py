@@ -3,7 +3,7 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 
 from app import app
-from tabs import general, matrix
+from tabs import general, matrix, powerCapture, constructiveInterference
 
 # Suppress errors from callback IDs not found
 app.config['suppress_callback_exceptions']=True
@@ -13,10 +13,15 @@ app.config['suppress_callback_exceptions']=True
 # Main layout
 app.layout = html.Div([
 
-    dcc.Tabs(id='tabs-example', value='tab-1', children=[
-        dcc.Tab(label='Tab one', value='tab-1'),
-        dcc.Tab(label='Tab two', value='tab-2'),
-    ]),
+    dcc.Tabs(
+        id='tabs-example',
+        children=[
+            dcc.Tab(label='Data Exploration', value='tab-general'),
+            dcc.Tab(label='Power Capture Effect', value='tab-capture'),
+            dcc.Tab(label='Constructive Interference', value='tab-CI'),
+            dcc.Tab(label='Mixed Effects', value='tab-matrix'),
+        ],
+        value='tab-matrix' ),
     html.Div(id='tabs-example-content'),
 
 ])
@@ -24,9 +29,13 @@ app.layout = html.Div([
 @app.callback(Output('tabs-example-content', 'children'),
               [Input('tabs-example', 'value')])
 def render_content(tab):
-    if tab == 'tab-1':
+    if tab == 'tab-general':
         return general.layout
-    elif tab == 'tab-2':
+    elif tab == 'tab-capture':
+        return powerCapture.layout
+    elif tab == 'tab-CI':
+        return constructiveInterference.layout
+    elif tab == 'tab-matrix':
         return matrix.layout
 
 if __name__ == '__main__':

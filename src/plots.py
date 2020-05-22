@@ -40,6 +40,7 @@ def prr_matrix_plot(
     DataPath,
     PowerDeltaList = [0,1,2,3,4],
     rowHeight = 100,
+    ModesToShow = [x for x in Modes],
     custom_layout = None,
     showMarkers=False,
     showCI=True,
@@ -47,7 +48,7 @@ def prr_matrix_plot(
     ):
 
     # Initialization
-    ModeList = [x for x in Modes]
+    ModeList = ModesToShow
     numRow = len(PowerDeltaList)
     numCol = len(ModeList)
     AnnotList = []
