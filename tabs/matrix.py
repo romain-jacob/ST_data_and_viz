@@ -175,7 +175,7 @@ layout = html.Div([
         dcc.Checklist(
             id='enable-options',
             options=[
-                {'label' : 'Show run data', 'value': ShowMarkers},
+                {'label' : 'Show individual run data', 'value': ShowMarkers},
                 {'label' : 'Show confidence intervals', 'value': ShowCI},
             ],
             value=[ShowCI],

@@ -12,6 +12,7 @@ from src.helpers import Modes, Parameters
 import src.colors as colors
 
 
+markerSize = 3
 base_layout =  dict(
     title={
         'text':'Title to update in function',
@@ -34,6 +35,7 @@ base_layout =  dict(
     },
     uirevision = True
 )
+
 
 def prr_matrix_plot(
     df,
@@ -403,7 +405,7 @@ def __prep_TimeDelta_plot__(
                 mode='markers',
                 marker={
                     'color':Modes[mode]['color'],
-                    'size':3
+                    'size':markerSize
                 },
                 showlegend=False,
                 legendgroup=Modes[mode]['id'],
@@ -571,7 +573,10 @@ def __prep_PowerDelta_plot__(
                 x=x_data,
                 y=y_data,
                 mode='markers',
-                marker={'color':Modes[mode]['color']},
+                marker={
+                    'color':Modes[mode]['color'],
+                    'size':markerSize
+                },
                 showlegend=False,
                 legendgroup=Modes[mode]['id'],
                 name=Modes[mode]['label'],
@@ -662,7 +667,10 @@ def __prep_3d_plot__(
             y=y_data,
             z=z_data,
             mode='markers',
-            marker={'color':Modes[mode]['color']},
+            marker={
+                'color':Modes[mode]['color'],
+                'size':markerSize
+            },
             showlegend=True,
             legendgroup=Modes[mode]['id'],
             name=Modes[mode]['label'],

@@ -126,7 +126,7 @@ layout = html.Div([
             id='enable-options',
             options=[
                 # {'label' : 'Show 3D plot', 'value': Show3dPlot},
-                {'label' : 'Show run data', 'value': ShowMarkers},
+                {'label' : 'Show individual run data', 'value': ShowMarkers},
                 {'label' : 'Show confidence intervals', 'value': ShowCI}
             ],
             value=[ShowCI],

@@ -7,12 +7,60 @@ from tabs import general, matrix, powerCapture, constructiveInterference
 
 # Suppress errors from callback IDs not found
 app.config['suppress_callback_exceptions']=True
-# mathjax = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML'
-# app.scripts.append_script({ 'external_url' : mathjax })
+
+# For deployment
+server = app.server
 
 # Main layout
 app.layout = html.Div([
 
+    # Introduction block
+    html.H1('Synchronous transmissions on Bluetooth 5 and IEEE 802.15.4 – An experimental study'),
+    html.Div([
+        html.P(
+            html.Strong('Welcome to the synchronous transmission data visualization app!'),
+        ),
+        html.P(
+            '''
+            The app is separated in several tabs, where each tab fetches a given part of the dataset and produces plots highlighting
+            specific aspects/findings.
+            '''),
+        html.P([
+            html.Span('''
+                All the plots are dynamic: you can zoom in, get point values on hover,
+                or toggle for traces on and off (click on the legend).
+                The plots are generated and rendered when you open a tab; the more data there is to display
+                the longer the loading time. The performance obviously depends on your Internet connection;
+                '''),
+            html.Br(),
+            html.Strong('a loading time of a few seconds is to be expected.'),
+            ]),
+        html.P('''
+            Each tab is structured similarly:
+            '''),
+        html.Ul([
+            html.Li('At the top, a text block shortly describes the data displayed in the tab and the corresponding findings.'),
+            html.Li('A "Data selectors" block let you customize/modify certain data filters.'),
+            html.Li('Finally, the corresponding plots are shown.'),
+        ]),
+        html.Span('''
+                The first tab "Data Exploration" contains the most general data visualizations
+                to let you explore the dataset freely.
+            '''),
+        html.Br(),
+        html.Span('''
+                The other tabs highlight more specific effects.
+                By default, the plots produced are the same as the one showed in the article.
+                As mentioned before, you can modify them via the filters in the "Data selectors" block.
+            '''),
+    ],
+    style={
+        'width':'50%',
+        'margin-bottom':20,
+        'margin-left':20,
+    }),
+
+    # Content tabs
     dcc.Tabs(
         id='tabs-example',
         children=[
@@ -21,7 +69,7 @@ app.layout = html.Div([
             dcc.Tab(label='Constructive Interference', value='tab-CI'),
             dcc.Tab(label='Mixed Effects', value='tab-matrix'),
         ],
-        value='tab-matrix' ),
+        value='tab-general' ),
     html.Div(id='tabs-example-content'),
 
 ])

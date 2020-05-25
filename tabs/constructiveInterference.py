@@ -26,7 +26,7 @@ ZigBeeDiffPacket_plot = go.Figure()
 
 # Initialize custom figure layout
 custom_layout = dict(
-    title = 'Prout',
+    title = '',
     showlegend = False,
     margin = dict(t=150),
     xaxis = {'tickvals':[-16,-8,0,8,16]},
@@ -122,7 +122,7 @@ layout = html.Div([
         dcc.Checklist(
             id='enable-options',
             options=[
-                {'label' : 'Show run data', 'value': ShowMarkers},
+                {'label' : 'Show individual run data', 'value': ShowMarkers},
                 {'label' : 'Show confidence intervals', 'value': ShowCI},
                 {'label' : 'Show threshold', 'value': ShowThreshold},
             ],
