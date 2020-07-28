@@ -1,5 +1,4 @@
 /.ipynb_checkpoints
-/data_raw
 */__pycache__
 /env
 *.pyc
