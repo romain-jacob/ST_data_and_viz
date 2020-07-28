@@ -1,6 +1,7 @@
 # Synchronous transmissions on Bluetooth 5 and IEEE 802.15.4 - A replication study
 
-[ZENODO badge comes here]
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3964355.svg)](https://doi.org/10.5281/zenodo.3964355)
+
 
 This repository contains the raw data and analysis scripts of a replication study of synchronous transmissions using the [nRF52840 Dongle](https://www.nordicsemi.com/en/Software%20and%20tools/Development%20Kits/nRF52840%20Dongle) where we compare the success rate of synchronous transmission attempts using two transmitters while varying a number of parameters. The repository also contains the source code of a data visualization application, which you can either
 - [run locally](#Run-locally) or
