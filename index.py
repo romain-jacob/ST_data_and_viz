@@ -4,6 +4,7 @@ from dash.dependencies import Input, Output
 
 from app import app
 from tabs import general, matrix, powerCapture, constructiveInterference
+import src.colors as colors
 
 # Suppress errors from callback IDs not found
 app.config['suppress_callback_exceptions']=True
@@ -16,6 +17,7 @@ app.layout = html.Div([
 
     # Introduction block
     html.H1('Synchronous transmissions on Bluetooth 5 and IEEE 802.15.4 – A replication study'),
+
     html.Div([
         html.P(
             html.Strong('Welcome to the synchronous transmission data visualization app!'),
@@ -59,6 +61,38 @@ app.layout = html.Div([
         'margin-bottom':20,
         'margin-left':20,
     }),
+
+    # Container row
+    html.Div([
+        html.Span([
+            'The source code of this application is available on ',
+            html.A(
+                'Github',
+                href='https://github.com/romain-jacob/ST_data_and_viz',
+                target='_blank',
+                ),
+            ' and archived on ',
+            html.A(
+                'Zenodo',
+                href='https://doi.org/10.5281/zenodo.3964355',
+                target='_blank',
+                ),
+            '.'
+            ]),
+        html.Br(),
+        html.Span(
+            html.A(
+                html.Img(src='https://zenodo.org/badge/DOI/10.5281/zenodo.3964355.svg', alt='DOI'),
+                href='https://doi.org/10.5281/zenodo.3964355',
+                target='_blank',
+                ),
+            ),
+    ], style={
+        'background-color':colors.light_grey,
+        'padding':20,
+        'line-height': '250%',
+        }
+    ),
 
     # Content tabs
     dcc.Tabs(
