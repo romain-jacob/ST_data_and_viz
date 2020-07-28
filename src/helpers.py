@@ -1,15 +1,6 @@
 import src.colors as colors
 
 Modes = dict(
-    ZigBee      = dict(
-        id=0,
-        color=colors.violet,
-        label="IEEE 802.15.4",
-        CIthreshold_ticks=4,
-        CIthreshold_label='$\\tau\\text{/2} \\; \\text{ (0.25}\\,\\mu\\text{s}\\text{)}$',
-        # CIthreshold_label='$\\;\\;\\tau\\text{/2} \\\\ \\text{0.25}\\mu\\text{s}$',
-        # CIthreshold_label_minus='$\\text{-}\\tau\\text{/2}$'
-    ),
     BLE_2M      = dict(
         id=2,
         color=colors.green,
@@ -45,6 +36,15 @@ Modes = dict(
         CIthreshold_ticks=8,
         CIthreshold_label='$\\tau\\text{/2} \\; \\text{ (0.50}\\,\\mu\\text{s}\\text{)}$',
         # CIthreshold_label='$\\;\\;\\tau\\text{/2} \\\\ \\text{0.50}\\mu\\text{s}$',
+        # CIthreshold_label_minus='$\\text{-}\\tau\\text{/2}$'
+    ),
+    ZigBee      = dict(
+        id=0,
+        color=colors.violet,
+        label="IEEE 802.15.4",
+        CIthreshold_ticks=4,
+        CIthreshold_label='$\\tau\\text{/2} \\; \\text{ (0.25}\\,\\mu\\text{s}\\text{)}$',
+        # CIthreshold_label='$\\;\\;\\tau\\text{/2} \\\\ \\text{0.25}\\mu\\text{s}$',
         # CIthreshold_label_minus='$\\text{-}\\tau\\text{/2}$'
     ),
 )

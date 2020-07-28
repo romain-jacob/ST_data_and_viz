@@ -13,6 +13,8 @@ import src.colors as colors
 
 
 markerSize = 3
+markerOpacity = 0.3
+CI_opacity = 0.8
 base_layout =  dict(
     title={
         'text':'Title to update in function',
@@ -411,7 +413,7 @@ def __prep_TimeDelta_plot__(
                 legendgroup=Modes[mode]['id'],
                 name=Modes[mode]['label'],
                 hoverinfo='skip',
-                opacity=0.3,
+                opacity=markerOpacity,
             )
             traces.append(scatter)
 
@@ -441,7 +443,7 @@ def __prep_TimeDelta_plot__(
                 name=Modes[mode]['label']+' CI',
                 fill='toself',
                 hoverinfo='skip',
-                opacity=0.3,
+                opacity=CI_opacity,
             )
             traces.append(CI)
 
@@ -581,7 +583,7 @@ def __prep_PowerDelta_plot__(
                 legendgroup=Modes[mode]['id'],
                 name=Modes[mode]['label'],
                 hoverinfo='skip',
-                opacity=0.3,
+                opacity=markerOpacity,
             )
             traces.append(scatter)
 
@@ -611,7 +613,7 @@ def __prep_PowerDelta_plot__(
                 name=Modes[mode]['label']+' CI',
                 fill='toself',
                 hoverinfo='skip',
-                opacity=0.3,
+                opacity=CI_opacity,
             )
             traces.append(CI)
 
@@ -675,7 +677,7 @@ def __prep_3d_plot__(
             legendgroup=Modes[mode]['id'],
             name=Modes[mode]['label'],
             hoverinfo='skip',
-            opacity=0.3,
+            opacity=markerOpacity,
         )
         traces.append(scatter)
 

@@ -15,7 +15,7 @@ server = app.server
 app.layout = html.Div([
 
     # Introduction block
-    html.H1('Synchronous transmissions on Bluetooth 5 and IEEE 802.15.4 – An experimental study'),
+    html.H1('Synchronous transmissions on Bluetooth 5 and IEEE 802.15.4 – A replication study'),
     html.Div([
         html.P(
             html.Strong('Welcome to the synchronous transmission data visualization app!'),

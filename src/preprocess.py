@@ -10,7 +10,7 @@ rssi_file = 'rssi.csv'
 
 def parse_run_rssi(pair,data,datetime,force_computation=''):
 
-    data_path = Path('data_raw_cleaned')
+    data_path = Path('data_raw')
     output_path = Path('data_preprocessed')
     data_path = data_path / pair / data / datetime
     output_path = output_path / pair / data / datetime
@@ -55,7 +55,7 @@ def parse_run_rssi(pair,data,datetime,force_computation=''):
 
 def parse_run_prr(pair,data,datetime,force_computation=''):
 
-    data_path = Path('data_raw_cleaned')
+    data_path = Path('data_raw')
     output_path = Path('data_preprocessed')
     data_path = data_path / pair / data / datetime
     output_path = output_path / pair / data / datetime
@@ -161,7 +161,7 @@ def parse_all_data(verbose=False, force_computation=''):
     '''
 
     # Data paths
-    data_path = Path('data_raw_cleaned')
+    data_path = Path('data_raw')
     output_path = Path('data_preprocessed')
 
     # 'rssi' flag triggers the recomputation of everything from the raw data
@@ -215,8 +215,8 @@ def clean_raw_data():
     + Correct the logging issue for TimeDelta = -100
     '''
     # Data paths
-    data_path = Path('data_raw')
-    output_path = Path('data_raw_cleaned')
+    data_path = Path('data_raw_origin')
+    output_path = Path('data_raw')
 
     for pair in [x for x in data_path.iterdir() if x.is_dir()]:
         for data in [x for x in pair.iterdir() if x.is_dir()]:
